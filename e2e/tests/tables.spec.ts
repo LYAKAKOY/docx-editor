@@ -225,12 +225,16 @@ test.describe('Table Row/Column Operations', () => {
 
     // Check that all columns have roughly equal widths
     const columnWidths = await page.evaluate(() => {
-      const table = document.querySelector('table');
-      if (!table) return [];
-      const firstRow = table.querySelector('tr');
+      const firstRow = document.querySelector(
+        '.paged-editor__pages .layout-page-content .layout-table .layout-table-row'
+      );
       if (!firstRow) return [];
-      const cells = firstRow.querySelectorAll('td, th');
-      return Array.from(cells).map((cell) => cell.getBoundingClientRect().width);
+      return Array.from(firstRow.children)
+        .filter(
+          (cell): cell is HTMLElement =>
+            cell instanceof HTMLElement && cell.classList.contains('layout-table-cell')
+        )
+        .map((cell) => cell.getBoundingClientRect().width);
     });
 
     expect(columnWidths.length).toBe(3);
@@ -325,14 +329,14 @@ test.describe('Table Cell Fill Color', () => {
 
     // Set blue on second cell
     await editor.clickTableCell(0, 0, 1);
-    await editor.setCellFillColor('#4a86e8');
+    await editor.setCellFillColor('#0070C0');
 
     // Verify colors
     const cell1Color = await editor.getCellBackgroundColor(0, 0, 0);
     const cell2Color = await editor.getCellBackgroundColor(0, 0, 1);
 
     expect(cell1Color).toMatch(/ffff00|rgb\(255,\s*255,\s*0\)/i);
-    expect(cell2Color).toMatch(/4a86e8|rgb\(74,\s*134,\s*232\)/i);
+    expect(cell2Color).toMatch(/0070c0|rgb\(0,\s*112,\s*192\)/i);
   });
 });
 

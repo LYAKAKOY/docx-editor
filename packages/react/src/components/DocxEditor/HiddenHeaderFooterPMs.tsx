@@ -47,6 +47,7 @@ import type {
   StyleDefinitions,
   Theme,
 } from '@eigenpal/docx-editor-core/types/document';
+import { handleSoftLineBreakKey } from './internals/softLineBreak';
 
 import 'prosemirror-view/style/prosemirror.css';
 
@@ -264,6 +265,7 @@ export const HiddenHeaderFooterPMs = memo(
             if (tr.docChanged) syncHfBlocksToDocumentRef.current?.(slotRId, slotKind, newState);
             onTransactionRef.current?.(slotRId, view, tr.docChanged);
           },
+          handleKeyDown: (view, event) => handleSoftLineBreakKey(view, event),
         });
         have.set(slot.rId, { rId: slot.rId, kind: slot.kind, view, mountNode: node });
       }

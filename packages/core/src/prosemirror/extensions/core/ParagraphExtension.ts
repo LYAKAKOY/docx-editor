@@ -8,6 +8,7 @@
 
 import { Fragment, type NodeSpec, type Schema } from 'prosemirror-model';
 import type { Command, EditorState } from 'prosemirror-state';
+import { closeHistory } from 'prosemirror-history';
 import type {
   ParagraphAlignment,
   LineSpacingRule,
@@ -420,7 +421,7 @@ function setParagraphAttr(attr: string, value: unknown): Command {
 
     if (!dispatch) return true;
 
-    let tr = state.tr;
+    let tr = closeHistory(state.tr);
     const seen = new Set<number>();
 
     state.doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
@@ -444,7 +445,7 @@ function setParagraphAttrsCmd(attrs: Record<string, unknown>): Command {
 
     if (!dispatch) return true;
 
-    let tr = state.tr;
+    let tr = closeHistory(state.tr);
     const seen = new Set<number>();
 
     state.doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
@@ -487,6 +488,35 @@ function makeSetLineSpacing(value: number, rule: LineSpacingRule = 'auto'): Comm
       lineSpacing: value,
       lineSpacingRule: rule,
     })(state, dispatch);
+  };
+}
+
+function makeSetParagraphSpacing(side: 'before' | 'after', twips: number): Command {
+  return (state, dispatch) => {
+    const attr = side === 'before' ? 'spaceBefore' : 'spaceAfter';
+
+    const { $from, $to } = state.selection;
+    if (!dispatch) return true;
+
+    let tr = closeHistory(state.tr);
+    const seen = new Set<number>();
+
+    state.doc.nodesBetween($from.pos, $to.pos, (node, pos) => {
+      if (node.type.name !== 'paragraph' || seen.has(pos)) return;
+      seen.add(pos);
+
+      tr = tr.setNodeMarkup(pos, undefined, {
+        ...node.attrs,
+        [attr]: twips,
+        spacingExplicit: {
+          ...(node.attrs.spacingExplicit ?? {}),
+          [side]: true,
+        },
+      });
+    });
+
+    dispatch(tr.scrollIntoView());
+    return true;
   };
 }
 
@@ -716,8 +746,8 @@ export const ParagraphExtension = createNodeExtension({
         singleSpacing: () => makeSetLineSpacing(240),
         oneAndHalfSpacing: () => makeSetLineSpacing(360),
         doubleSpacing: () => makeSetLineSpacing(480),
-        setSpaceBefore: (twips: number) => setParagraphAttr('spaceBefore', twips),
-        setSpaceAfter: (twips: number) => setParagraphAttr('spaceAfter', twips),
+        setSpaceBefore: (twips: number) => makeSetParagraphSpacing('before', twips),
+        setSpaceAfter: (twips: number) => makeSetParagraphSpacing('after', twips),
         increaseIndent: (amount?: number) => makeIncreaseIndent(amount),
         decreaseIndent: (amount?: number) => makeDecreaseIndent(amount),
         setIndentLeft: (twips: number) => setParagraphAttr('indentLeft', twips > 0 ? twips : null),

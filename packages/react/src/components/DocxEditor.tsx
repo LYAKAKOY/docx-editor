@@ -82,6 +82,14 @@ import {
   type TableContextInfo,
   type PMContentControl,
 } from '@eigenpal/docx-editor-core/prosemirror';
+import {
+  resolveTableRulerState,
+  type TableRulerState,
+} from '@eigenpal/docx-editor-core/layout-bridge';
+import {
+  commitTableRulerBoundaryResize,
+  type TableRulerBoundary,
+} from '@eigenpal/docx-editor-core/prosemirror/tableResize';
 import type { ContentControlFilter, ContentControlValue } from '@eigenpal/docx-editor-core/agent';
 import {
   acceptChange,
@@ -591,6 +599,7 @@ export const DocxEditor = forwardRef<DocxEditorRef, DocxEditorProps>(function Do
   // can read hfEditPosition before useHeaderFooterEditing is called).
   const [hfEditPosition, setHfEditPosition] = useState<'header' | 'footer' | null>(null);
   const [hfEditIsFirstPage, setHfEditIsFirstPage] = useState(false);
+  const [activeListMarkerPmStart, setActiveListMarkerPmStart] = useState<number | null>(null);
 
   // Comments sidebar state
   const [showCommentsSidebar, setShowCommentsSidebar] = useState(false);
@@ -630,6 +639,7 @@ export const DocxEditor = forwardRef<DocxEditorRef, DocxEditorProps>(function Do
   // (the source of truth, including remote ySync updates) rather than a debounced
   // copy in React state.
   const [pmState, setPmState] = useState<PMEditorState | null>(null);
+  const [tableRulerState, setTableRulerState] = useState<TableRulerState | null>(null);
   const { entries: trackedChanges, commentToRevision } = useTrackedChanges(pmState);
   const [anchorPositions, setAnchorPositions] =
     useState<Map<string, number>>(EMPTY_ANCHOR_POSITIONS);
@@ -1086,7 +1096,41 @@ export const DocxEditor = forwardRef<DocxEditorRef, DocxEditorProps>(function Do
     readOnly,
     handleDocumentChange,
     getActiveEditorView,
+    activeListMarkerPmStart,
   });
+
+  const recomputeTableRulerBoundaries = useCallback(() => {
+    const view = getActiveEditorView();
+    const pagesContainer =
+      containerRef.current?.querySelector<HTMLElement>('.paged-editor__pages') ?? null;
+    const resolved = resolveTableRulerState(pagesContainer, view?.state ?? null, {
+      zoom: state.zoom,
+      scope: hfEditPosition ?? 'body',
+    });
+    setTableRulerState(resolved);
+  }, [getActiveEditorView, hfEditPosition, state.zoom]);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(recomputeTableRulerBoundaries);
+    return () => cancelAnimationFrame(frame);
+  }, [
+    recomputeTableRulerBoundaries,
+    pmState,
+    showCommentsSidebar,
+    state.pmTableContext,
+    state.zoom,
+  ]);
+
+  const handleTableRulerBoundaryChange = useCallback(
+    (boundary: TableRulerBoundary, positionTwips: number) => {
+      if (readOnly) return;
+      const view = getActiveEditorView();
+      if (!view) return;
+      commitTableRulerBoundaryResize(view, boundary, positionTwips);
+      requestAnimationFrame(recomputeTableRulerBoundaries);
+    },
+    [getActiveEditorView, readOnly, recomputeTableRulerBoundaries]
+  );
 
   const {
     showWatermark,
@@ -1557,6 +1601,9 @@ export const DocxEditor = forwardRef<DocxEditorRef, DocxEditorProps>(function Do
         onFirstLineIndentChange: handleFirstLineIndentChange,
         tabStops: state.paragraphTabs,
         onTabStopRemove: handleTabStopRemove,
+        indentArea: tableRulerState?.activeCellArea ?? null,
+        tableBoundaries: tableRulerState?.boundaries ?? null,
+        onTableBoundaryChange: handleTableRulerBoundaryChange,
       }}
       verticalRulerProps={{
         sectionProps: initialSectionProperties,
@@ -1657,6 +1704,8 @@ export const DocxEditor = forwardRef<DocxEditorRef, DocxEditorProps>(function Do
             onDocumentChange={handleDocumentChange}
             onSelectionChange={handleSelectionChange}
             onPagedSelectionChange={handlePagedSelectionChange}
+            activeListMarkerPmStart={activeListMarkerPmStart}
+            onListMarkerSelectionChange={setActiveListMarkerPmStart}
             onReady={(ref) => {
               const view = ref.getView();
               if (view) setPmState(view.state);

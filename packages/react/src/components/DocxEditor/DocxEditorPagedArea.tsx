@@ -17,7 +17,10 @@ import {
   computeHfSelectionRectsFromView,
   invalidateHfDomCache,
 } from '@eigenpal/docx-editor-core/layout-bridge';
-import { applyCellSelectionHighlight } from './internals/domSelection';
+import {
+  applyCellSelectionHighlight,
+  applyListMarkerSelectionHighlight,
+} from './internals/domSelection';
 import { extractSelectionState } from '@eigenpal/docx-editor-core/prosemirror';
 import type { ExtensionManager } from '@eigenpal/docx-editor-core/prosemirror/extensions';
 import type { SelectionState } from '@eigenpal/docx-editor-core/prosemirror';
@@ -78,6 +81,8 @@ export function DocxEditorPagedArea({
   onDocumentChange,
   onSelectionChange,
   onPagedSelectionChange,
+  activeListMarkerPmStart,
+  onListMarkerSelectionChange,
   onReady,
   onEditorViewReady,
   onRenderedDomContextReady,
@@ -140,6 +145,8 @@ export function DocxEditorPagedArea({
   onDocumentChange: (doc: Document) => void;
   onSelectionChange: (state: SelectionState | null) => void;
   onPagedSelectionChange: () => void;
+  activeListMarkerPmStart: number | null;
+  onListMarkerSelectionChange: (pmStart: number | null) => void;
   onReady: (ref: PagedEditorRef) => void;
   onEditorViewReady: ((view: EditorView) => void) | undefined;
   onRenderedDomContextReady: ((ctx: RenderedDomContext) => void) | undefined;
@@ -254,7 +261,10 @@ export function DocxEditorPagedArea({
       const pagesEl = window.document.querySelector('.paged-editor__pages') as HTMLElement | null;
       // Multi-cell selection renders via `.layout-table-cell-selected`, scoped
       // to the active section so footer selections don't light up header cells.
-      if (pagesEl) applyCellSelectionHighlight(pagesEl, view.state, { scope: hfEditPosition });
+      if (pagesEl) {
+        applyCellSelectionHighlight(pagesEl, view.state, { scope: hfEditPosition });
+        applyListMarkerSelectionHighlight(pagesEl, view.state, { scope: hfEditPosition });
+      }
     },
     [hfEditPosition, toHfHostLocal]
   );
@@ -365,6 +375,8 @@ export function DocxEditorPagedArea({
         extensionManager={extensionManager}
         onDocumentChange={onDocumentChange}
         onSelectionChange={onPagedSelectionChange}
+        selectedListMarkerPmStart={activeListMarkerPmStart}
+        onListMarkerSelectionChange={onListMarkerSelectionChange}
         externalPlugins={externalPlugins}
         onReady={(ref) => {
           onReady(ref);

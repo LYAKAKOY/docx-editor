@@ -59,6 +59,12 @@ export function getSelectionFormatting(
     if (paragraphFormatting.lineSpacing !== undefined) {
       result.lineSpacing = paragraphFormatting.lineSpacing;
     }
+    if (paragraphFormatting.spaceBefore !== undefined) {
+      result.spaceBefore = paragraphFormatting.spaceBefore;
+    }
+    if (paragraphFormatting.spaceAfter !== undefined) {
+      result.spaceAfter = paragraphFormatting.spaceAfter;
+    }
 
     if (paragraphFormatting.styleId) {
       result.styleId = paragraphFormatting.styleId;

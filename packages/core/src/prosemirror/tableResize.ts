@@ -18,6 +18,17 @@ export const MIN_CELL_WIDTH_TWIPS = 300;
 /** Minimum row height (~0.14"). */
 export const MIN_ROW_HEIGHT_TWIPS = 200;
 
+export interface TableRulerBoundary {
+  tablePmStart: number;
+  columnIndex: number;
+  kind: 'column' | 'rightEdge';
+  positionTwips: number;
+  previousTwips: number;
+  nextTwips?: number;
+  minTwips: number;
+  maxTwips: number;
+}
+
 interface FoundTable {
   node: PMNode;
   /** PM doc position of the table node (its `before(d)`) */
@@ -197,4 +208,32 @@ export function commitRightEdgeResize(
   });
 
   view.dispatch(tr);
+}
+
+export function commitTableRulerBoundaryResize(
+  view: EditorView,
+  boundary: TableRulerBoundary,
+  positionTwips: number
+): void {
+  const nextPosition = Math.round(
+    Math.max(boundary.minTwips, Math.min(positionTwips, boundary.maxTwips))
+  );
+
+  if (boundary.kind === 'rightEdge') {
+    commitRightEdgeResize(view, {
+      pmStart: boundary.tablePmStart,
+      colIdx: boundary.columnIndex,
+      newWidth: Math.max(MIN_CELL_WIDTH_TWIPS, nextPosition - boundary.previousTwips),
+    });
+    return;
+  }
+
+  if (boundary.nextTwips === undefined) return;
+
+  commitColumnResize(view, {
+    pmStart: boundary.tablePmStart,
+    colIdx: boundary.columnIndex,
+    newLeft: Math.max(MIN_CELL_WIDTH_TWIPS, nextPosition - boundary.previousTwips),
+    newRight: Math.max(MIN_CELL_WIDTH_TWIPS, boundary.nextTwips - nextPosition),
+  });
 }

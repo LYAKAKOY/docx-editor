@@ -39,6 +39,7 @@ import { fromProseDoc } from '@eigenpal/docx-editor-core/prosemirror/conversion'
 import type { ExtensionManager } from '@eigenpal/docx-editor-core/prosemirror/extensions';
 import { stripScrollFlag } from '@eigenpal/docx-editor-core/editor';
 import type { Document, Theme, StyleDefinitions } from '@eigenpal/docx-editor-core/types/document';
+import { handleSoftLineBreakKey } from './internals/softLineBreak';
 
 // Import ProseMirror CSS
 import 'prosemirror-view/style/prosemirror.css';
@@ -303,6 +304,7 @@ const HiddenProseMirrorComponent = forwardRef<HiddenProseMirrorRef, HiddenProseM
         },
         // Intercept key events before ProseMirror processes them
         handleKeyDown: (view: EditorView, event: KeyboardEvent): boolean => {
+          if (handleSoftLineBreakKey(view, event)) return true;
           return onKeyDownRef.current?.(view, event) ?? false;
         },
         // Paginated layer owns scroll; never let PM scroll the viewport / ancestors.

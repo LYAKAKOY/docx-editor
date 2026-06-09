@@ -96,6 +96,7 @@ export interface UsePagesPointerOptions {
     position: { top: number; left: number };
   }) => void;
   onHeaderFooterDoubleClick?: (position: 'header' | 'footer', pageNumber?: number) => void;
+  onListMarkerSelectionChange?: (pmStart: number | null) => void;
   setSelectedImageInfo: React.Dispatch<React.SetStateAction<ImageSelectionInfo | null>>;
   setSelectionRects: React.Dispatch<React.SetStateAction<SelectionRect[]>>;
   setCaretPosition: React.Dispatch<React.SetStateAction<CaretPosition | null>>;
@@ -185,6 +186,7 @@ export function usePagesPointer(opts: UsePagesPointerOptions): UsePagesPointerRe
     onContextMenu,
     onHyperlinkClick,
     onHeaderFooterDoubleClick,
+    onListMarkerSelectionChange,
     setSelectedImageInfo,
     setSelectionRects,
     setCaretPosition,
@@ -436,13 +438,17 @@ export function usePagesPointer(opts: UsePagesPointerOptions): UsePagesPointerRe
       // header tables — `tableResize.tryStartFromMouseDown` doesn't care
       // which document the cells belong to, only that the click landed on
       // a `.layout-table-*-handle`.
-      if (tableResize.tryStartFromMouseDown(target, e)) return;
+      if (tableResize.tryStartFromMouseDown(target, e)) {
+        onListMarkerSelectionChange?.(null);
+        return;
+      }
 
       // Image click → NodeSelection on the active doc.
       const imageEl = coreFindImageElement(target);
       if (imageEl) {
         e.preventDefault();
         e.stopPropagation();
+        onListMarkerSelectionChange?.(null);
         const pmStart = imageEl.dataset.pmStart;
         if (pmStart !== undefined) {
           const pos = parseInt(pmStart, 10);
@@ -456,8 +462,25 @@ export function usePagesPointer(opts: UsePagesPointerOptions): UsePagesPointerRe
         return;
       }
 
+      const listMarkerEl = target.closest('.layout-list-marker') as HTMLElement | null;
+      if (listMarkerEl?.dataset.pmStart) {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedImageInfo(null);
+        const pmStart = Number(listMarkerEl.dataset.pmStart);
+        const view = surface.getView();
+        if (view && Number.isFinite(pmStart)) {
+          onListMarkerSelectionChange?.(hfEditMode ? null : pmStart);
+          surface.setSelection(Math.min(pmStart + 1, view.state.doc.content.size));
+        }
+        surface.focus();
+        if (!hfEditMode) setIsFocused(true);
+        return;
+      }
+
       // Click outside an image clears the image selection.
       setSelectedImageInfo(null);
+      onListMarkerSelectionChange?.(null);
       e.preventDefault();
 
       const pmPos = getPositionFromMouse(e.clientX, e.clientY);
@@ -501,6 +524,7 @@ export function usePagesPointer(opts: UsePagesPointerOptions): UsePagesPointerRe
       setCaretPosition,
       buildImageSelectionInfo,
       setIsFocused,
+      onListMarkerSelectionChange,
     ]
   );
 

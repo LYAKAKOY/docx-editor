@@ -99,6 +99,12 @@ export function decreaseIndent(amount?: number): Command;
 export const decreaseListLevel: Command;
 
 // @public (undocumented)
+export const DEFAULT_LIST_HANGING_TWIPS = 360;
+
+// @public (undocumented)
+export const DEFAULT_LIST_LEFT_INDENT_TWIPS = 720;
+
+// @public (undocumented)
 export function deleteColumn(state: EditorState, dispatch?: (tr: Transaction) => void): boolean;
 
 // @public (undocumented)
@@ -205,6 +211,9 @@ export function getParagraphAlignment(state: EditorState): ParagraphAlignment | 
 
 // @public (undocumented)
 export function getParagraphBidi(state: EditorState): boolean;
+
+// @public (undocumented)
+export function getRulerIndentsFromParagraphFormatting(formatting: ParagraphFormatting | Record<string, never> | undefined): RulerParagraphIndents;
 
 // @public (undocumented)
 export function getSelectedText(state: EditorState): string;
@@ -590,6 +599,12 @@ export function setInsideTableBorders(state: EditorState, dispatch?: (tr: Transa
 
 // @public (undocumented)
 export function setLineSpacing(value: number, rule?: LineSpacingRule): Command;
+
+// @public (undocumented)
+export function setListMarkerIndentFromRuler(firstLineTwips: number, markerPmStart?: number | null): Command;
+
+// @public (undocumented)
+export function setListTextIndentFromRuler(indentLeftTwips: number, markerPmStart?: number | null): Command;
 
 // @public (undocumented)
 export const setLtr: Command;

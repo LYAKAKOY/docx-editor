@@ -75,12 +75,31 @@ test.describe('Line Breaks and Paragraphs', () => {
   });
 
   test('Shift+Enter creates soft break', async ({ page }) => {
-    await editor.typeText('Line 1');
+    await editor.typeText('Привет');
     await editor.pressShiftEnter();
-    await editor.typeText('Line 2');
+    await editor.typeText('пока');
 
-    await assertions.assertDocumentContainsText(page, 'Line 1');
-    await assertions.assertDocumentContainsText(page, 'Line 2');
+    await assertions.assertDocumentContainsText(page, 'Привет');
+    await assertions.assertDocumentContainsText(page, 'пока');
+
+    const softBreakState = await page.evaluate(() => {
+      const hiddenDoc = document.querySelector('.ProseMirror');
+      const hiddenParagraphs = hiddenDoc?.querySelectorAll('p') ?? [];
+      const hiddenParagraph = hiddenParagraphs[0] ?? null;
+      const paintedParagraphs = document.querySelectorAll('.layout-page-content .layout-paragraph');
+      return {
+        hiddenParagraphCount: hiddenParagraphs.length,
+        hiddenBreakCount: hiddenParagraph?.querySelectorAll('br').length ?? 0,
+        paintedParagraphCount: paintedParagraphs.length,
+        paintedBreakCount: document.querySelectorAll('.layout-page-content .layout-run-linebreak')
+          .length,
+      };
+    });
+
+    expect(softBreakState.hiddenParagraphCount).toBe(1);
+    expect(softBreakState.hiddenBreakCount).toBe(1);
+    expect(softBreakState.paintedParagraphCount).toBe(1);
+    expect(softBreakState.paintedBreakCount).toBe(1);
   });
 
   test('multiple Enter presses create multiple paragraphs', async ({ page }) => {

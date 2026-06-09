@@ -106,7 +106,16 @@
     "double": "Doppelt",
     "lineSpacingTitle": "Zeilenabstand: {label}",
     "paragraphSpacing": "Absatzabstand",
-    "label": "Zeilenabstand"
+    "spaceBeforePt": null,
+    "spaceBeforePtAria": null,
+    "spaceAfterPt": null,
+    "spaceAfterPtAria": null,
+    "pointsAbbrev": null,
+    "label": "Zeilenabstand",
+    "addSpaceAfter": null,
+    "addSpaceBefore": null,
+    "removeSpaceAfter": null,
+    "removeSpaceBefore": null
   },
   "styles": {
     "selectAriaLabel": "Absatzformatvorlage auswählen",
@@ -807,7 +816,8 @@
     "leftIndent": "Linker Einzug",
     "rightIndent": "Rechter Einzug",
     "topMargin": "Oberer Seitenrand",
-    "bottomMargin": "Unterer Seitenrand"
+    "bottomMargin": "Unterer Seitenrand",
+    "tableColumnBoundary": null
   },
   "print": {
     "label": "Drucken",

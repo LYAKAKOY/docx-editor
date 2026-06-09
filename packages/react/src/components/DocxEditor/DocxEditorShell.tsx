@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
+import type { TableRulerCellArea } from '@eigenpal/docx-editor-core/layout-bridge';
 import type { SectionProperties, TabStop } from '@eigenpal/docx-editor-core/types/document';
 import type { TrackedChangesResult } from '@eigenpal/docx-editor-core/prosemirror/utils/extractTrackedChanges';
+import type { TableRulerBoundary } from '@eigenpal/docx-editor-core/prosemirror/tableResize';
 import { LocaleProvider } from '../../i18n';
 import { ErrorBoundary, ErrorProvider } from '../ErrorBoundary';
 import { HorizontalRuler } from '../ui/HorizontalRuler';
@@ -36,6 +38,9 @@ interface HorizontalRulerProps {
   onFirstLineIndentChange: (twips: number) => void;
   tabStops: TabStop[] | null;
   onTabStopRemove: (positionTwips: number) => void;
+  indentArea: TableRulerCellArea | null;
+  tableBoundaries: TableRulerBoundary[] | null;
+  onTableBoundaryChange: (boundary: TableRulerBoundary, positionTwips: number) => void;
 }
 
 interface VerticalRulerProps {

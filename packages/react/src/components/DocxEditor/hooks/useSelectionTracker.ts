@@ -5,6 +5,7 @@ import {
   type SelectionState,
   type TableContextInfo,
   createStyleResolver,
+  getRulerIndentsFromParagraphFormatting,
 } from '@eigenpal/docx-editor-core/prosemirror';
 import { resolveColorToHex } from '@eigenpal/docx-editor-core/utils';
 import type { EditorView } from 'prosemirror-view';
@@ -189,19 +190,23 @@ export function useSelectionTracker({
         highlight: textFormatting.highlight,
         alignment: paragraphFormatting.alignment,
         lineSpacing: paragraphFormatting.lineSpacing,
+        spaceBefore: paragraphFormatting.spaceBefore,
+        spaceAfter: paragraphFormatting.spaceAfter,
         listState,
         styleId: selectionState.styleId ?? undefined,
         indentLeft: paragraphFormatting.indentLeft,
         bidi: !!paragraphFormatting.bidi,
       };
 
+      const rulerIndents = getRulerIndentsFromParagraphFormatting(paragraphFormatting);
+
       applySelectionDelta({
         selectionFormatting: formatting,
-        paragraphIndentLeft: paragraphFormatting.indentLeft ?? 0,
-        paragraphIndentRight: paragraphFormatting.indentRight ?? 0,
-        paragraphFirstLineIndent: paragraphFormatting.indentFirstLine ?? 0,
-        paragraphHangingIndent: paragraphFormatting.hangingIndent ?? false,
-        paragraphTabs: paragraphFormatting.tabs ?? null,
+        paragraphIndentLeft: rulerIndents.indentLeft,
+        paragraphIndentRight: rulerIndents.indentRight,
+        paragraphFirstLineIndent: rulerIndents.firstLineIndent,
+        paragraphHangingIndent: rulerIndents.hangingIndent,
+        paragraphTabs: rulerIndents.tabStops,
         pmTableContext: pmTableCtx,
         pmImageContext: pmImageCtx,
       });

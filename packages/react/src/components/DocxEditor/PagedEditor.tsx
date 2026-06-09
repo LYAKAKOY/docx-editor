@@ -109,6 +109,10 @@ export interface PagedEditorProps {
   onDocumentChange?: (document: Document) => void;
   /** Callback when selection changes. */
   onSelectionChange?: (from: number, to: number) => void;
+  /** PM position of the list marker group selected by clicking a painted marker. */
+  selectedListMarkerPmStart?: number | null;
+  /** Called when a painted list marker group is selected or cleared. */
+  onListMarkerSelectionChange?: (pmStart: number | null) => void;
   /** External ProseMirror plugins. */
   externalPlugins?: Plugin[];
   /** Extension manager for plugins/schema/commands (optional — falls back to default) */
@@ -271,6 +275,8 @@ const PagedEditorComponent = forwardRef<PagedEditorRef, PagedEditorProps>(
       zoom = 1,
       onDocumentChange,
       onSelectionChange,
+      selectedListMarkerPmStart = null,
+      onListMarkerSelectionChange,
       externalPlugins = EMPTY_PLUGINS,
       extensionManager,
       onReady,
@@ -464,6 +470,7 @@ const PagedEditorComponent = forwardRef<PagedEditorRef, PagedEditorProps>(
       syncCoordinator,
       isImageInteractingRef,
       onSelectionChangeRef,
+      selectedListMarkerPmStart,
     });
 
     // =========================================================================
@@ -562,6 +569,7 @@ const PagedEditorComponent = forwardRef<PagedEditorRef, PagedEditorProps>(
       onContextMenu,
       onHyperlinkClick,
       onHeaderFooterDoubleClick,
+      onListMarkerSelectionChange,
       setSelectedImageInfo,
       setSelectionRects,
       setCaretPosition,

@@ -858,6 +858,40 @@ export class EditorPage {
     await this.page.getByRole('option', { name: label, exact: true }).click();
   }
 
+  async setParagraphSpacing(actionLabel: string): Promise<void> {
+    const lineSpacingButton = this.toolbar.locator('[aria-label="Line spacing"]');
+    await lineSpacingButton.click();
+    await this.page.getByRole('option', { name: actionLabel, exact: true }).click();
+  }
+
+  async setParagraphSpacingPoints(side: 'before' | 'after', points: number): Promise<void> {
+    const inputName =
+      side === 'before' ? 'Spacing before paragraph (pt)' : 'Spacing after paragraph (pt)';
+    const input = this.page.getByRole('spinbutton', { name: inputName, exact: true });
+    if (!(await input.isVisible().catch(() => false))) {
+      const lineSpacingButton = this.toolbar.locator('[aria-label="Line spacing"]');
+      await lineSpacingButton.click();
+    }
+    await input.fill(String(points));
+    await input.press('Enter');
+  }
+
+  async addParagraphSpaceBefore(): Promise<void> {
+    await this.setParagraphSpacing('Add space before paragraph');
+  }
+
+  async removeParagraphSpaceBefore(): Promise<void> {
+    await this.setParagraphSpacing('Remove space before paragraph');
+  }
+
+  async addParagraphSpaceAfter(): Promise<void> {
+    await this.setParagraphSpacing('Add space after paragraph');
+  }
+
+  async removeParagraphSpaceAfter(): Promise<void> {
+    await this.setParagraphSpacing('Remove space after paragraph');
+  }
+
   /**
    * Set single line spacing
    */
@@ -1167,21 +1201,49 @@ export class EditorPage {
    * Set cell fill color
    */
   async setCellFillColor(color: string): Promise<void> {
-    await this.page.locator('[data-testid="toolbar-table-cell-fill"]').click();
-    await this.page.waitForTimeout(100);
-    await this.page.locator(`button[title="${color}"]`).click();
+    await this.page.locator('.docx-color-picker-arrow[aria-label="Cell Fill Color"]').click();
+    const dialog = this.page.locator('.docx-color-picker-dropdown');
+    await expect(dialog).toBeVisible();
+
+    const hex = color.replace(/^#/, '').toUpperCase();
+    const standardColorNames: Record<string, string> = {
+      C00000: 'Dark Red',
+      FF0000: 'Red',
+      FFC000: 'Orange',
+      FFFF00: 'Yellow',
+      '92D050': 'Light Green',
+      '00B050': 'Green',
+      '00B0F0': 'Light Blue',
+      '0070C0': 'Blue',
+      '002060': 'Dark Blue',
+      '7030A0': 'Purple',
+    };
+    const standardColorName = standardColorNames[hex];
+    if (standardColorName) {
+      await dialog
+        .getByRole('button', { name: standardColorName, exact: true })
+        .evaluate((button) => (button as HTMLButtonElement).click());
+      return;
+    }
+
+    const input = dialog.getByLabel('Custom hex color');
+    await input.click();
+    await input.press(`${process.platform === 'darwin' ? 'Meta' : 'Control'}+A`);
+    await input.press('Backspace');
+    await this.page.keyboard.type(hex);
+
+    const applyButton = dialog.getByRole('button', { name: 'Apply' });
+    await expect(applyButton).toBeEnabled();
+    await applyButton.click();
   }
 
   /**
    * Get cell background color
    */
   async getCellBackgroundColor(tableIndex: number, row: number, col: number): Promise<string> {
-    const table = this.page.locator('.ProseMirror table').nth(tableIndex);
-    const cell = table.locator('tr').nth(row).locator('td, th').nth(col);
-    const style = await cell.getAttribute('style');
-    // Extract background-color from style
-    const match = style?.match(/background-color:\s*([^;]+)/);
-    return match ? match[1].trim() : '';
+    const table = this.page.locator('.paged-editor__pages .layout-table').nth(tableIndex);
+    const cell = table.locator('.layout-table-row').nth(row).locator('.layout-table-cell').nth(col);
+    return cell.evaluate((el) => window.getComputedStyle(el).backgroundColor);
   }
 
   /**

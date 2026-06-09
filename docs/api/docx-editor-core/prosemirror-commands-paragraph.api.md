@@ -35,6 +35,12 @@ export function decreaseIndent(amount?: number): Command;
 export const decreaseListLevel: Command;
 
 // @public (undocumented)
+export const DEFAULT_LIST_HANGING_TWIPS = 360;
+
+// @public (undocumented)
+export const DEFAULT_LIST_LEFT_INDENT_TWIPS = 720;
+
+// @public (undocumented)
 export const doubleSpacing: Command;
 
 // @public (undocumented)
@@ -54,6 +60,9 @@ export function getParagraphBidi(state: EditorState): boolean;
 
 // @public (undocumented)
 export function getParagraphTabs(state: EditorState): TabStop[] | null;
+
+// @public (undocumented)
+export function getRulerIndentsFromParagraphFormatting(formatting: ParagraphFormatting | Record<string, never> | undefined): RulerParagraphIndents;
 
 // @public (undocumented)
 export function getStyleId(state: EditorState): string | null;
@@ -90,6 +99,15 @@ export interface ResolvedStyleAttrs {
     runFormatting?: TextFormatting;
 }
 
+// @public (undocumented)
+export type RulerParagraphIndents = {
+    indentLeft: number;
+    indentRight: number;
+    firstLineIndent: number;
+    hangingIndent: boolean;
+    tabStops: TabStop[] | null;
+};
+
 // @public
 export function setAlignment(alignment: ParagraphAlignment): Command;
 
@@ -104,6 +122,12 @@ export function setIndentRight(twips: number): Command;
 
 // @public (undocumented)
 export function setLineSpacing(value: number, rule?: LineSpacingRule): Command;
+
+// @public (undocumented)
+export function setListMarkerIndentFromRuler(firstLineTwips: number, markerPmStart?: number | null): Command;
+
+// @public (undocumented)
+export function setListTextIndentFromRuler(indentLeftTwips: number, markerPmStart?: number | null): Command;
 
 // @public (undocumented)
 export const setLtr: Command;

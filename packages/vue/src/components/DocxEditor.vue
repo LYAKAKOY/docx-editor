@@ -132,12 +132,15 @@
           :first-line-indent="rulerIndents.firstLineIndent"
           :hanging-indent="rulerIndents.hangingIndent"
           :tab-stops="rulerIndents.tabStops"
+          :indent-area="tableRulerState?.activeCellArea ?? null"
+          :table-boundaries="tableRulerBoundaries"
           @left-margin-change="handleLeftMarginChange"
           @right-margin-change="handleRightMarginChange"
           @indent-left-change="handleIndentLeftChange"
           @indent-right-change="handleIndentRightChange"
           @first-line-indent-change="handleFirstLineIndentChange"
           @tab-stop-remove="handleTabStopRemove"
+          @table-boundary-change="handleTableRulerBoundaryChange"
         />
       </div>
 
@@ -389,9 +392,14 @@ import { TextSelection } from 'prosemirror-state';
 import {
   computeHfCaretRectFromView,
   computeHfSelectionRectsFromView,
+  resolveTableRulerState,
+  type TableRulerState,
 } from '@eigenpal/docx-editor-core/layout-bridge';
 import { getSelectionInfo as getSelectionInfoImpl } from '../utils/refApiQueries';
-import { extractSelectionState } from '@eigenpal/docx-editor-core/prosemirror';
+import {
+  extractSelectionState,
+  getRulerIndentsFromParagraphFormatting,
+} from '@eigenpal/docx-editor-core/prosemirror';
 import { nearestHfHostEl } from '../utils/domQueries';
 import Toolbar from './Toolbar.vue';
 import TableToolbar from './ui/TableToolbar.vue';
@@ -442,6 +450,10 @@ import { useFontLifecycle } from '../composables/useFontLifecycle';
 import { LayoutSelectionGate } from '@eigenpal/docx-editor-core/prosemirror';
 import { extractSelectionContext } from '@eigenpal/docx-editor-core/prosemirror/plugins/selectionTracker';
 import { createCommentIdAllocator } from '@eigenpal/docx-editor-core/prosemirror/commentIdAllocator';
+import {
+  commitTableRulerBoundaryResize,
+  type TableRulerBoundary,
+} from '@eigenpal/docx-editor-core/prosemirror/tableResize';
 
 const props = withDefaults(defineProps<DocxEditorProps>(), {
   documentBuffer: null,
@@ -498,6 +510,7 @@ const hiddenPmRef = ref<HTMLElement | null>(null);
 const pagesRef = ref<HTMLElement | null>(null);
 const pagesViewportRef = ref<HTMLElement | null>(null);
 const stateTick = ref(0);
+const activeListMarkerPmStart = ref<number | null>(null);
 const contentChangeSubscribers = new Set<(document: unknown) => void>();
 const selectionChangeSubscribers = new Set<(selection: unknown) => void>();
 const syncCoordinator = new LayoutSelectionGate();
@@ -555,7 +568,9 @@ const {
   hiddenContainer: hiddenPmRef,
   pagesContainer: pagesRef,
   readOnly,
-  externalPlugins: props.externalPlugins, syncCoordinator, editorMode,
+  externalPlugins: props.externalPlugins,
+  syncCoordinator,
+  editorMode,
   author: authorRef,
   onChange: (doc) => {
     emit('change', doc);
@@ -606,13 +621,26 @@ const rulerIndents = computed(() => {
   void stateTick.value;
   const view = editorView.value;
   const pf = view ? extractSelectionContext(view.state).paragraphFormatting : {};
+  const indents = getRulerIndentsFromParagraphFormatting(pf);
   return {
-    indentLeft: pf.indentLeft ?? 0,
-    indentRight: pf.indentRight ?? 0,
-    firstLineIndent: pf.indentFirstLine ?? 0,
-    hangingIndent: pf.hangingIndent ?? false,
-    tabStops: pf.tabs ?? null,
+    indentLeft: indents.indentLeft,
+    indentRight: indents.indentRight,
+    firstLineIndent: indents.firstLineIndent,
+    hangingIndent: indents.hangingIndent,
+    tabStops: indents.tabStops,
   };
+});
+
+const tableRulerState = computed<TableRulerState | null>(() => {
+  void stateTick.value;
+  return resolveTableRulerState(pagesRef.value, editorView.value?.state ?? null, {
+    zoom: zoom.value,
+    scope: 'body',
+  });
+});
+
+const tableRulerBoundaries = computed<TableRulerBoundary[] | null>(() => {
+  return tableRulerState.value?.boundaries ?? null;
 });
 
 const documentTheme = computed(() => {
@@ -644,10 +672,13 @@ function clearHfOverlay() {
   hfSelectionRects.value = [];
 }
 
-useFontLifecycle(() => props.fonts, (err) => {
-  emit('error', err);
-  props.onError?.(err);
-});
+useFontLifecycle(
+  () => props.fonts,
+  (err) => {
+    emit('error', err);
+    props.onError?.(err);
+  }
+);
 
 // Memoized so the template doesn't walk the headers/footers Maps every tick.
 const activeHfView = computed<EditorView | null>(() =>
@@ -867,7 +898,22 @@ const {
   handleIndentRightChange,
   handleFirstLineIndentChange,
   handleTabStopRemove,
-} = usePageSetupControls({ editorView, getDocument, readOnly, stateTick, reLayout, emit });
+} = usePageSetupControls({
+  editorView,
+  getDocument,
+  readOnly,
+  stateTick,
+  activeListMarkerPmStart,
+  reLayout,
+  emit,
+});
+
+function handleTableRulerBoundaryChange(boundary: TableRulerBoundary, positionTwips: number) {
+  if (readOnly.value) return;
+  const view = editorView.value;
+  if (!view) return;
+  commitTableRulerBoundaryResize(view, boundary, positionTwips);
+}
 
 const { showWatermark, currentWatermark, handleWatermarkApply } = useWatermarkControls({
   editorView,
@@ -906,8 +952,10 @@ const {
   handleCommentResolve,
   handleCommentUnresolve,
   handleCommentDelete,
-  handleAcceptChange, handleRejectChange,
-  handleAcceptChangeById, handleRejectChangeById,
+  handleAcceptChange,
+  handleRejectChange,
+  handleAcceptChangeById,
+  handleRejectChangeById,
   handleTrackedChangeReply,
 } = useCommentManagement({
   editorView,
@@ -961,6 +1009,7 @@ const {
   pagesRef,
   pagesViewportRef,
   selectedImage,
+  activeListMarkerPmStart,
   imageInteracting,
   hyperlinkPopupData,
   readOnly,
@@ -1080,6 +1129,7 @@ const selectionSync = useSelectionSync({
   zoom,
   selectedImage,
   isHfEditing,
+  selectedListMarkerPmStart: activeListMarkerPmStart,
   imageInteracting,
 });
 

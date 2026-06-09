@@ -106,7 +106,16 @@
     "single": "Single",
     "double": "Double",
     "lineSpacingTitle": "Line spacing: {label}",
-    "paragraphSpacing": "Paragraph spacing"
+    "paragraphSpacing": "Paragraph spacing",
+    "spaceBeforePt": "Before",
+    "spaceBeforePtAria": "Spacing before paragraph (pt)",
+    "spaceAfterPt": "After",
+    "spaceAfterPtAria": "Spacing after paragraph (pt)",
+    "pointsAbbrev": "pt",
+    "addSpaceBefore": "Add space before paragraph",
+    "removeSpaceBefore": "Remove space before paragraph",
+    "addSpaceAfter": "Add space after paragraph",
+    "removeSpaceAfter": "Remove space after paragraph"
   },
   "styles": {
     "selectAriaLabel": "Select paragraph style",
@@ -831,7 +840,8 @@
     "leftIndent": "Left indent",
     "rightIndent": "Right indent",
     "topMargin": "Top margin",
-    "bottomMargin": "Bottom margin"
+    "bottomMargin": "Bottom margin",
+    "tableColumnBoundary": "Table column boundary"
   },
   "print": {
     "label": "Print",

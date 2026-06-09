@@ -16,6 +16,12 @@ export function applyCellSelectionHighlight(pagesContainer: HTMLElement, state: 
 // @public
 export function applyFootnotePresentation(blocks: FlowBlock[], displayNumber: number): FlowBlock[];
 
+// @public (undocumented)
+export function applyListMarkerSelectionHighlight(pagesContainer: HTMLElement, state: EditorState, options?: {
+    scope?: 'body' | 'header' | 'footer';
+    markerPmStart?: number | null;
+}): void;
+
 // @public
 export function buildFontString(style: FontStyle): string;
 
@@ -597,6 +603,12 @@ export function resolveHeaderFooterVisualTop(run: ImageRun, paragraphY: number, 
 // @public
 export function resolveListTemplate(template: string, counters: number[], levelNumFmts: NumberFormat[] | undefined): string;
 
+// @public (undocumented)
+export function resolveTableRulerState(pagesContainer: HTMLElement | null | undefined, state: EditorState | null | undefined, options?: {
+    zoom?: number;
+    scope?: 'body' | 'header' | 'footer';
+}): TableRulerState | null;
+
 // @internal
 export function resolveTableWidthPx(value: number | undefined, widthType: string | undefined, parentWidth: number): number | undefined;
 
@@ -707,6 +719,24 @@ export type TableInsertHoverInput = {
     hfEditMode: 'header' | 'footer' | null;
     edgeProximity?: number;
 };
+
+// @public (undocumented)
+export interface TableRulerCellArea {
+    // (undocumented)
+    leftTwips: number;
+    // (undocumented)
+    rightTwips: number;
+}
+
+// @public (undocumented)
+export interface TableRulerState {
+    // (undocumented)
+    activeCellArea: TableRulerCellArea | null;
+    // (undocumented)
+    boundaries: TableRulerBoundary[];
+    // (undocumented)
+    tablePmStart: number;
+}
 
 // @public
 export interface TextMeasurement {

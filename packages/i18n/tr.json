@@ -106,7 +106,16 @@
     "double": "Çift",
     "lineSpacingTitle": "Satır aralığı: {label}",
     "paragraphSpacing": "Paragraf aralığı",
-    "label": null
+    "spaceBeforePt": null,
+    "spaceBeforePtAria": null,
+    "spaceAfterPt": null,
+    "spaceAfterPtAria": null,
+    "pointsAbbrev": null,
+    "label": null,
+    "addSpaceAfter": null,
+    "addSpaceBefore": null,
+    "removeSpaceAfter": null,
+    "removeSpaceBefore": null
   },
   "styles": {
     "selectAriaLabel": "Paragraf stili seç",
@@ -810,7 +819,8 @@
     "leftIndent": "Sol girinti",
     "rightIndent": "Sağ girinti",
     "topMargin": "Üst kenar boşluğu",
-    "bottomMargin": "Alt kenar boşluğu"
+    "bottomMargin": "Alt kenar boşluğu",
+    "tableColumnBoundary": null
   },
   "print": {
     "label": "Yazdır",

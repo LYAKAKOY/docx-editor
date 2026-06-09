@@ -64,6 +64,7 @@ export interface UsePagesPointerOptions {
   pagesRef: Ref<HTMLElement | null>;
   pagesViewportRef: Ref<HTMLElement | null>;
   selectedImage: ShallowRef<ImageSelectionInfo | null>;
+  activeListMarkerPmStart?: Ref<number | null>;
   imageInteracting: Ref<boolean>;
   hyperlinkPopupData: Ref<HyperlinkPopupData | null>;
   readOnly: Ref<boolean>;
@@ -575,6 +576,7 @@ export function usePagesPointer(opts: UsePagesPointerOptions): UsePagesPointerRe
     // Table resize: column / row / right-edge handles claim the gesture
     // regardless of which doc the cells belong to.
     if (!opts.readOnly.value && opts.tableResize.tryStartResize(event, view)) {
+      if (opts.activeListMarkerPmStart) opts.activeListMarkerPmStart.value = null;
       return;
     }
 
@@ -583,6 +585,7 @@ export function usePagesPointer(opts: UsePagesPointerOptions): UsePagesPointerRe
     if (imageEl) {
       event.preventDefault();
       event.stopPropagation();
+      if (opts.activeListMarkerPmStart) opts.activeListMarkerPmStart.value = null;
       const pmStart = Number(imageEl.dataset.pmStart);
       if (!isNaN(pmStart)) {
         try {
@@ -602,8 +605,25 @@ export function usePagesPointer(opts: UsePagesPointerOptions): UsePagesPointerRe
       return;
     }
 
+    const listMarkerEl = target.closest('.layout-list-marker') as HTMLElement | null;
+    if (listMarkerEl?.dataset.pmStart) {
+      event.preventDefault();
+      event.stopPropagation();
+      opts.selectedImage.value = null;
+      const pmStart = Number(listMarkerEl.dataset.pmStart);
+      if (Number.isFinite(pmStart)) {
+        if (opts.activeListMarkerPmStart) {
+          opts.activeListMarkerPmStart.value = hfEdit.value ? null : pmStart;
+        }
+        setPmSelection(Math.min(pmStart + 1, view.state.doc.content.size));
+      }
+      view.focus();
+      return;
+    }
+
     // Click outside an image clears the image selection.
     opts.selectedImage.value = null;
+    if (opts.activeListMarkerPmStart) opts.activeListMarkerPmStart.value = null;
 
     event.preventDefault();
 

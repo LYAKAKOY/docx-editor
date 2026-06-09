@@ -22,6 +22,7 @@ function buildPage(): HTMLElement {
         </div>
         <div class="layout-page-content">
           <span data-pm-start="1" data-pm-end="5" id="body-span-1">Body run 1</span>
+          <span class="layout-list-marker" data-pm-start="1" data-pm-end="5" id="body-list-marker">1.</span>
           <span data-pm-start="6" data-pm-end="9" id="body-span-2">Body run 2</span>
           <div class="layout-paragraph">
             <span class="layout-empty-run" id="body-empty-run"></span>
@@ -42,6 +43,11 @@ describe('findBodyPmSpans', () => {
     const pages = buildPage();
     const spans = findBodyPmSpans(pages);
     expect(spans.map((s) => s.id)).toEqual(['body-span-1', 'body-span-2']);
+  });
+
+  test('skips painted list markers because they are click targets, not text runs', () => {
+    const pages = buildPage();
+    expect(findBodyPmSpans(pages).map((s) => s.id)).not.toContain('body-list-marker');
   });
 
   test('returns empty array when only HF content is present', () => {
@@ -75,7 +81,7 @@ describe('findBodyPmAnchors', () => {
   test('includes body paragraphs as well as body spans', () => {
     const pages = buildPage();
     const ids = findBodyPmAnchors(pages).map((el) => el.id);
-    expect(ids).toEqual(['body-span-1', 'body-span-2', 'body-paragraph']);
+    expect(ids).toEqual(['body-span-1', 'body-list-marker', 'body-span-2', 'body-paragraph']);
   });
 });
 

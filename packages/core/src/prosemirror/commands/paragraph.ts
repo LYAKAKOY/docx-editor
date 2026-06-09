@@ -68,6 +68,15 @@ export function setIndentFirstLine(twips: number, hanging?: boolean): Command {
   return cmds.setIndentFirstLine(twips, hanging);
 }
 
+export {
+  DEFAULT_LIST_HANGING_TWIPS,
+  DEFAULT_LIST_LEFT_INDENT_TWIPS,
+  getRulerIndentsFromParagraphFormatting,
+  setListMarkerIndentFromRuler,
+  setListTextIndentFromRuler,
+} from './listIndent';
+export type { RulerParagraphIndents } from './listIndent';
+
 // Lists
 export const toggleBulletList: Command = cmds.toggleBulletList();
 export const toggleNumberedList: Command = cmds.toggleNumberedList();

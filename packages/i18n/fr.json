@@ -106,7 +106,16 @@
     "double": "Double",
     "lineSpacingTitle": "Interligne : {label}",
     "paragraphSpacing": "Espacement des paragraphes",
-    "label": null
+    "spaceBeforePt": null,
+    "spaceBeforePtAria": null,
+    "spaceAfterPt": null,
+    "spaceAfterPtAria": null,
+    "pointsAbbrev": null,
+    "label": null,
+    "addSpaceAfter": null,
+    "addSpaceBefore": null,
+    "removeSpaceAfter": null,
+    "removeSpaceBefore": null
   },
   "styles": {
     "selectAriaLabel": "Sélectionner le type de paragraphe",
@@ -816,7 +825,8 @@
     "leftIndent": "Décalage à gauche",
     "rightIndent": "Décalage à droite",
     "topMargin": "Marge supérieure",
-    "bottomMargin": "Marge inférieure"
+    "bottomMargin": "Marge inférieure",
+    "tableColumnBoundary": null
   },
   "print": {
     "label": "Imprimer",

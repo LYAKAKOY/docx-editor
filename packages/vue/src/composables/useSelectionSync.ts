@@ -24,6 +24,7 @@ import {
 import {
   findBodyPmAnchor,
   applyCellSelectionHighlight,
+  applyListMarkerSelectionHighlight,
 } from '@eigenpal/docx-editor-core/layout-bridge';
 import { findImageElement } from '@eigenpal/docx-editor-core/layout-painter';
 import type { ImageSelectionInfo } from '../components/imageSelectionTypes';
@@ -49,6 +50,8 @@ export interface UseSelectionSyncOptions {
    * body). The HF view's own caret rect is drawn by DocxEditor.vue.
    */
   isHfEditing?: Ref<boolean>;
+  /** PM position of the list marker group selected by clicking a painted marker. */
+  selectedListMarkerPmStart?: Ref<number | null>;
   /**
    * True while a resize / move / rotate gesture is in flight. Suppresses the
    * post-transaction "clear the overlay" path so the handles don't vanish
@@ -155,6 +158,9 @@ export function useSelectionSync(opts: UseSelectionSyncOptions): UseSelectionSyn
     // CellSelection and clears a stale highlight when the selection moves to
     // text or an image. Mirrors React's `applyCellSelectionHighlight` call.
     applyCellSelectionHighlight(container, view.state);
+    applyListMarkerSelectionHighlight(container, view.state, {
+      markerPmStart: opts.selectedListMarkerPmStart?.value ?? null,
+    });
 
     // An image NodeSelection is painted by ImageSelectionOverlay, not here —
     // suppress the text caret / selection rects so they don't double up. Gate

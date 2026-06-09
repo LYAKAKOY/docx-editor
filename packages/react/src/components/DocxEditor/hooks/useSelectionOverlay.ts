@@ -31,6 +31,7 @@ import type { ImageSelectionInfo } from '../overlays/ImageSelectionOverlay';
 import type { LayoutSelectionGate } from '../internals/LayoutSelectionGate';
 import {
   applyCellSelectionHighlight,
+  applyListMarkerSelectionHighlight,
   computeSelectionRectsFromDom,
   getCaretFromDom,
 } from '../internals/domSelection';
@@ -46,6 +47,7 @@ export interface UseSelectionOverlayOptions {
   syncCoordinator: LayoutSelectionGate;
   isImageInteractingRef: React.MutableRefObject<boolean>;
   onSelectionChangeRef: React.MutableRefObject<((from: number, to: number) => void) | undefined>;
+  selectedListMarkerPmStart: number | null;
 }
 
 export interface UseSelectionOverlayReturn {
@@ -72,6 +74,7 @@ export function useSelectionOverlay(opts: UseSelectionOverlayOptions): UseSelect
     syncCoordinator,
     isImageInteractingRef,
     onSelectionChangeRef,
+    selectedListMarkerPmStart,
   } = opts;
 
   const [selectionRects, setSelectionRects] = useState<SelectionRect[]>([]);
@@ -111,6 +114,9 @@ export function useSelectionOverlay(opts: UseSelectionOverlayOptions): UseSelect
       const pagesEl = pagesContainerRef.current;
       if (pagesEl) {
         applyCellSelectionHighlight(pagesEl, state);
+        applyListMarkerSelectionHighlight(pagesEl, state, {
+          markerPmStart: selectedListMarkerPmStart,
+        });
         // Keep a content control's boundary visible while the caret is inside
         // it (Word-style focus), in addition to the painter's hover reveal.
         applySdtFocus(pagesEl, enclosingSdtGroupIds(state.doc, from, to));
@@ -186,7 +192,15 @@ export function useSelectionOverlay(opts: UseSelectionOverlayOptions): UseSelect
         setCaretPosition(null);
       }
     },
-    [layout, blocks, measures, zoom, onSelectionChangeRef, pagesContainerRef]
+    [
+      layout,
+      blocks,
+      measures,
+      zoom,
+      onSelectionChangeRef,
+      pagesContainerRef,
+      selectedListMarkerPmStart,
+    ]
   );
 
   const handleSelectionChange = useCallback(

@@ -67,6 +67,9 @@ export {
 } from './clickToPositionDom';
 export type { DomSelectionRect, DomCaretPosition } from './clickToPositionDom';
 export { applyCellSelectionHighlight } from './cellSelectionHighlight';
+export { applyListMarkerSelectionHighlight } from './listMarkerSelectionHighlight';
+export { resolveTableRulerState } from './tableRuler';
+export type { TableRulerCellArea, TableRulerState } from './tableRuler';
 
 // Selection rectangles
 export {

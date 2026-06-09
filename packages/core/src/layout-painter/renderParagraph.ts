@@ -522,6 +522,11 @@ export function renderParagraphFragment(
         fontSize,
         block.attrs.listMarkerRevision
       );
+      marker.dataset.listMarker = 'true';
+      const markerPmStart = block.pmStart ?? fragment.pmStart;
+      const markerPmEnd = block.pmEnd ?? fragment.pmEnd;
+      if (markerPmStart !== undefined) marker.dataset.pmStart = String(markerPmStart);
+      if (markerPmEnd !== undefined) marker.dataset.pmEnd = String(markerPmEnd);
       // When the hang exceeds the left indent the marker belongs in the left
       // margin — exactly where Word puts it (a list whose direct `w:ind` has
       // `hanging` > `left`, #729). CSS padding can't be negative, so the

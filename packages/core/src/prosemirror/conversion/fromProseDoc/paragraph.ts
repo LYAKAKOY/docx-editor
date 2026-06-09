@@ -205,6 +205,12 @@ function paragraphAttrsToFormatting(attrs: ParagraphAttrs): ParagraphFormatting 
     if (attrs.bidi !== (orig.bidi || undefined)) {
       result.bidi = attrs.bidi || undefined;
     }
+    if (attrs.spacingExplicit?.before && attrs.spaceBefore !== orig.spaceBefore) {
+      result.spaceBefore = attrs.spaceBefore ?? undefined;
+    }
+    if (attrs.spacingExplicit?.after && attrs.spaceAfter !== orig.spaceAfter) {
+      result.spaceAfter = attrs.spaceAfter ?? undefined;
+    }
 
     return result;
   }
@@ -213,8 +219,8 @@ function paragraphAttrsToFormatting(attrs: ParagraphAttrs): ParagraphFormatting 
   // newly created paragraphs that don't have _originalFormatting)
   const hasFormatting =
     attrs.alignment ||
-    attrs.spaceBefore ||
-    attrs.spaceAfter ||
+    attrs.spaceBefore != null ||
+    attrs.spaceAfter != null ||
     attrs.lineSpacing ||
     attrs.indentLeft ||
     attrs.indentRight ||
@@ -234,8 +240,8 @@ function paragraphAttrsToFormatting(attrs: ParagraphAttrs): ParagraphFormatting 
 
   return {
     alignment: attrs.alignment || undefined,
-    spaceBefore: attrs.spaceBefore || undefined,
-    spaceAfter: attrs.spaceAfter || undefined,
+    spaceBefore: attrs.spaceBefore ?? undefined,
+    spaceAfter: attrs.spaceAfter ?? undefined,
     lineSpacing: attrs.lineSpacing || undefined,
     lineSpacingRule: attrs.lineSpacingRule || undefined,
     indentLeft: attrs.indentLeft || undefined,

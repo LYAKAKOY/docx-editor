@@ -79,7 +79,10 @@ function SelectContent({
               position === 'popper' &&
                 'h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]'
             )}
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={(e) => {
+              if ((e.target as HTMLElement).closest('[data-select-interactive]')) return;
+              e.preventDefault();
+            }}
           >
             {children}
           </SelectPrimitive.Viewport>

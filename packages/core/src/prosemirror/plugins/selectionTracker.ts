@@ -92,6 +92,12 @@ export function extractSelectionContext(state: EditorState): SelectionContext {
       paragraphFormatting.lineSpacing = paragraph.attrs.lineSpacing;
       paragraphFormatting.lineSpacingRule = paragraph.attrs.lineSpacingRule;
     }
+    if (paragraph.attrs.spaceBefore != null) {
+      paragraphFormatting.spaceBefore = paragraph.attrs.spaceBefore;
+    }
+    if (paragraph.attrs.spaceAfter != null) {
+      paragraphFormatting.spaceAfter = paragraph.attrs.spaceAfter;
+    }
     if (paragraph.attrs.indentLeft) {
       paragraphFormatting.indentLeft = paragraph.attrs.indentLeft;
     }

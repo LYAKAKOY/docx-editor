@@ -15,6 +15,8 @@ import {
   setFontFamily,
   setAlignment,
   setLineSpacing,
+  setSpaceBefore,
+  setSpaceAfter,
   toggleBulletList,
   toggleNumberedList,
   increaseIndent,
@@ -164,6 +166,12 @@ export function useFormattingActions({
             break;
           case 'lineSpacing':
             setLineSpacing(action.value)(view.state, view.dispatch);
+            break;
+          case 'paragraphSpacing':
+            (action.side === 'before' ? setSpaceBefore : setSpaceAfter)(action.value)(
+              view.state,
+              view.dispatch
+            );
             break;
           case 'applyStyle': {
             // Read latest doc through ref to dodge stale closures.

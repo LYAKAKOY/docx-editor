@@ -106,7 +106,16 @@
     "double": "दुगुना",
     "lineSpacingTitle": "लाइन स्पेसिंग: {label}",
     "paragraphSpacing": "पैराग्राफ स्पेसिंग",
-    "label": null
+    "spaceBeforePt": null,
+    "spaceBeforePtAria": null,
+    "spaceAfterPt": null,
+    "spaceAfterPtAria": null,
+    "pointsAbbrev": null,
+    "label": null,
+    "addSpaceAfter": null,
+    "addSpaceBefore": null,
+    "removeSpaceAfter": null,
+    "removeSpaceBefore": null
   },
   "styles": {
     "selectAriaLabel": "पैराग्राफ शैली चुनें",
@@ -816,7 +825,8 @@
     "leftIndent": "बायां इंडेंट",
     "rightIndent": "दायां इंडेंट",
     "topMargin": "शीर्ष मार्जिन",
-    "bottomMargin": "तल मार्जिन"
+    "bottomMargin": "तल मार्जिन",
+    "tableColumnBoundary": null
   },
   "print": {
     "label": "प्रिंट करें",

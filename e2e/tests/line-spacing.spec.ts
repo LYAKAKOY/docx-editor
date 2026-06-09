@@ -162,6 +162,59 @@ test.describe('Multiple Paragraph Spacing', () => {
 
     await assertions.assertDocumentContainsText(page, 'This is a single paragraph');
   });
+
+  test('paragraph spacing before and after on selected paragraphs', async ({ page }) => {
+    await editor.typeText('First paragraph');
+    await editor.pressEnter();
+    await editor.typeText('Second paragraph');
+    await editor.selectAll();
+
+    await editor.addParagraphSpaceBefore();
+    await editor.addParagraphSpaceAfter();
+
+    const withSpacing = await page.evaluate(() => [
+      window.__DOCX_EDITOR_E2E__?.getParagraphAttrs(0),
+      window.__DOCX_EDITOR_E2E__?.getParagraphAttrs(1),
+    ]);
+    for (const attrs of withSpacing) {
+      expect(attrs?.spaceBefore).toBe(240);
+      expect(attrs?.spaceAfter).toBe(240);
+      expect(attrs?.spacingExplicit).toMatchObject({ before: true, after: true });
+    }
+
+    await editor.removeParagraphSpaceBefore();
+    await editor.removeParagraphSpaceAfter();
+
+    const withoutSpacing = await page.evaluate(() => [
+      window.__DOCX_EDITOR_E2E__?.getParagraphAttrs(0),
+      window.__DOCX_EDITOR_E2E__?.getParagraphAttrs(1),
+    ]);
+    for (const attrs of withoutSpacing) {
+      expect(attrs?.spaceBefore).toBe(0);
+      expect(attrs?.spaceAfter).toBe(0);
+      expect(attrs?.spacingExplicit).toMatchObject({ before: true, after: true });
+    }
+  });
+
+  test('paragraph spacing before and after accepts point values', async ({ page }) => {
+    await editor.typeText('First paragraph');
+    await editor.pressEnter();
+    await editor.typeText('Second paragraph');
+    await editor.selectAll();
+
+    await editor.setParagraphSpacingPoints('before', 6);
+    await editor.setParagraphSpacingPoints('after', 18.5);
+
+    const attrsByParagraph = await page.evaluate(() => [
+      window.__DOCX_EDITOR_E2E__?.getParagraphAttrs(0),
+      window.__DOCX_EDITOR_E2E__?.getParagraphAttrs(1),
+    ]);
+    for (const attrs of attrsByParagraph) {
+      expect(attrs?.spaceBefore).toBe(120);
+      expect(attrs?.spaceAfter).toBe(370);
+      expect(attrs?.spacingExplicit).toMatchObject({ before: true, after: true });
+    }
+  });
 });
 
 test.describe('Line Spacing with Formatting', () => {

@@ -106,7 +106,16 @@
     "double": "Podwójna",
     "lineSpacingTitle": "Interlinia: {label}",
     "paragraphSpacing": "Odstępy między akapitami",
-    "label": null
+    "spaceBeforePt": null,
+    "spaceBeforePtAria": null,
+    "spaceAfterPt": null,
+    "spaceAfterPtAria": null,
+    "pointsAbbrev": null,
+    "label": null,
+    "addSpaceAfter": null,
+    "addSpaceBefore": null,
+    "removeSpaceAfter": null,
+    "removeSpaceBefore": null
   },
   "styles": {
     "selectAriaLabel": "Wybierz styl akapitu",
@@ -807,7 +816,8 @@
     "leftIndent": "Wcięcie z lewej",
     "rightIndent": "Wcięcie z prawej",
     "topMargin": "Margines górny",
-    "bottomMargin": "Margines dolny"
+    "bottomMargin": "Margines dolny",
+    "tableColumnBoundary": null
   },
   "print": {
     "label": "Drukuj",

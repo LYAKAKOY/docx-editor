@@ -3,7 +3,7 @@
  *
  * 3 handles only:
  * - Left side: first-line indent (▼ down at top) + left indent (▲ up at bottom)
- * - Right side: right indent (▼ down at top)
+ * - Right side: right indent (▲ up at bottom)
  *
  * Margins shown as gray zones on the ruler edges.
  * Drag the boundary between gray/white to adjust page margins.
@@ -12,6 +12,8 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import type { CSSProperties } from 'react';
+import type { TableRulerCellArea } from '@eigenpal/docx-editor-core/layout-bridge';
+import type { TableRulerBoundary } from '@eigenpal/docx-editor-core/prosemirror/tableResize';
 import type { SectionProperties, TabStop } from '@eigenpal/docx-editor-core/types/document';
 import { twipsToPixels, pixelsToTwips, formatPx } from '@eigenpal/docx-editor-core/utils';
 import { useTranslation } from '../../i18n';
@@ -39,9 +41,18 @@ export interface HorizontalRulerProps {
   style?: CSSProperties;
   tabStops?: TabStop[] | null;
   onTabStopRemove?: (positionTwips: number) => void;
+  indentArea?: TableRulerCellArea | null;
+  tableBoundaries?: TableRulerBoundary[] | null;
+  onTableBoundaryChange?: (boundary: TableRulerBoundary, positionTwips: number) => void;
 }
 
-type MarkerType = 'leftMargin' | 'rightMargin' | 'firstLineIndent' | 'leftIndent' | 'rightIndent';
+type MarkerType =
+  | 'leftMargin'
+  | 'rightMargin'
+  | 'firstLineIndent'
+  | 'leftIndent'
+  | 'rightIndent'
+  | 'tableBoundary';
 
 // ============================================================================
 // CONSTANTS
@@ -59,6 +70,9 @@ const MARGIN_ZONE_COLOR = 'rgba(0, 0, 0, 0.02)';
 const INDENT_COLOR = '#4285f4';
 const INDENT_HOVER_COLOR = '#3367d6';
 const INDENT_ACTIVE_COLOR = '#2a56c6';
+const TABLE_MARKER_COLOR = '#f1f3f4';
+const TABLE_MARKER_BORDER = '#b9c0c8';
+const TABLE_MARKER_ACTIVE = '#e3e8ef';
 
 const TRI_SIZE = 5; // triangle half-width in px
 
@@ -73,6 +87,16 @@ function formatValueForTooltip(twips: number, unit: 'inch' | 'cm'): string {
   return (twips / TWIPS_PER_CM).toFixed(1) + ' cm';
 }
 
+function sameTableBoundary(a: TableRulerBoundary | null, b: TableRulerBoundary): boolean {
+  return (
+    !!a && a.tablePmStart === b.tablePmStart && a.columnIndex === b.columnIndex && a.kind === b.kind
+  );
+}
+
+function clampRounded(value: number, min: number, max: number): number {
+  return Math.round(Math.max(min, Math.min(value, max)));
+}
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -84,7 +108,7 @@ export function HorizontalRuler({
   onLeftMarginChange,
   onRightMarginChange,
   onFirstLineIndentChange,
-  showFirstLineIndent = false,
+  showFirstLineIndent = true,
   firstLineIndent = 0,
   hangingIndent = false,
   indentLeft = 0,
@@ -96,35 +120,44 @@ export function HorizontalRuler({
   style,
   tabStops,
   onTabStopRemove,
+  indentArea,
+  tableBoundaries,
+  onTableBoundaryChange,
 }: HorizontalRulerProps): React.ReactElement {
   const { t } = useTranslation();
   const [dragging, setDragging] = useState<MarkerType | null>(null);
   const [hoveredMarker, setHoveredMarker] = useState<MarkerType | null>(null);
+  const [hoveredTableBoundary, setHoveredTableBoundary] = useState<number | null>(null);
   const [dragValue, setDragValue] = useState<number | null>(null);
   const [dragPositionPx, setDragPositionPx] = useState<number | null>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
+  const activeTableBoundaryRef = useRef<TableRulerBoundary | null>(null);
 
   // Page dimensions
   const pageWidthTwips = sectionProps?.pageWidth ?? DEFAULT_PAGE_WIDTH_TWIPS;
   const leftMarginTwips = sectionProps?.marginLeft ?? DEFAULT_MARGIN_TWIPS;
   const rightMarginTwips = sectionProps?.marginRight ?? DEFAULT_MARGIN_TWIPS;
-  const contentTwips = pageWidthTwips - leftMarginTwips - rightMarginTwips;
+  const indentAreaLeftTwips = indentArea?.leftTwips ?? leftMarginTwips;
+  const indentAreaRightTwips = indentArea?.rightTwips ?? pageWidthTwips - rightMarginTwips;
+  const indentAreaWidthTwips = Math.max(0, indentAreaRightTwips - indentAreaLeftTwips);
 
   // Pixel conversions
   const pageWidthPx = twipsToPixels(pageWidthTwips) * zoom;
   const leftMarginPx = twipsToPixels(leftMarginTwips) * zoom;
   const rightMarginPx = twipsToPixels(rightMarginTwips) * zoom;
+  const indentAreaLeftPx = twipsToPixels(indentAreaLeftTwips) * zoom;
+  const indentAreaRightPx = twipsToPixels(indentAreaRightTwips) * zoom;
   const indentLeftPx = twipsToPixels(indentLeft) * zoom;
   const indentRightPx = twipsToPixels(indentRight) * zoom;
 
   // First line indent: hanging goes left, normal goes right
-  const effectiveFirstLineIndent = hangingIndent ? -firstLineIndent : firstLineIndent;
+  const effectiveFirstLineIndent = hangingIndent ? -Math.abs(firstLineIndent) : firstLineIndent;
   const firstLineIndentPx = twipsToPixels(effectiveFirstLineIndent) * zoom;
 
   // Handle positions (in px from ruler left edge)
-  const leftIndentPosPx = leftMarginPx + indentLeftPx;
-  const rightIndentPosPx = pageWidthPx - rightMarginPx - indentRightPx;
-  const firstLinePosPx = leftMarginPx + indentLeftPx + firstLineIndentPx;
+  const leftIndentPosPx = indentAreaLeftPx + indentLeftPx;
+  const rightIndentPosPx = indentAreaRightPx - indentRightPx;
+  const firstLinePosPx = indentAreaLeftPx + indentLeftPx + firstLineIndentPx;
 
   const handleDragStart = useCallback(
     (e: React.MouseEvent, marker: MarkerType) => {
@@ -136,6 +169,17 @@ export function HorizontalRuler({
     [editable]
   );
 
+  const handleTableBoundaryDragStart = useCallback(
+    (e: React.MouseEvent, boundary: TableRulerBoundary) => {
+      if (!editable || !onTableBoundaryChange) return;
+      e.preventDefault();
+      e.stopPropagation();
+      activeTableBoundaryRef.current = boundary;
+      setDragging('tableBoundary');
+    },
+    [editable, onTableBoundaryChange]
+  );
+
   const handleDrag = useCallback(
     (e: MouseEvent) => {
       if (!dragging || !rulerRef.current) return;
@@ -145,35 +189,45 @@ export function HorizontalRuler({
       setDragPositionPx(x);
       const positionTwips = pixelsToTwips(x / zoom);
 
-      if (dragging === 'leftMargin') {
+      if (dragging === 'tableBoundary') {
+        const boundary = activeTableBoundaryRef.current;
+        if (!boundary) return;
+        const rounded = clampRounded(positionTwips, boundary.minTwips, boundary.maxTwips);
+        setDragValue(rounded);
+        setDragPositionPx(twipsToPixels(rounded) * zoom);
+        onTableBoundaryChange?.(boundary, rounded);
+      } else if (dragging === 'leftMargin') {
         const maxMargin = pageWidthTwips - rightMarginTwips - 720;
-        const rounded = Math.round(Math.max(0, Math.min(positionTwips, maxMargin)));
+        const rounded = clampRounded(positionTwips, 0, maxMargin);
         setDragValue(rounded);
         onLeftMarginChange?.(rounded);
       } else if (dragging === 'rightMargin') {
         const fromRight = pageWidthTwips - positionTwips;
         const maxMargin = pageWidthTwips - leftMarginTwips - 720;
-        const rounded = Math.round(Math.max(0, Math.min(fromRight, maxMargin)));
+        const rounded = clampRounded(fromRight, 0, maxMargin);
         setDragValue(rounded);
         onRightMarginChange?.(rounded);
       } else if (dragging === 'firstLineIndent') {
-        const base = leftMarginTwips + indentLeft;
+        const base = indentAreaLeftTwips + indentLeft;
         const indentFromBase = positionTwips - base;
-        const maxIndent = contentTwips - indentLeft - indentRight - 720;
-        const rounded = Math.round(Math.max(-indentLeft, Math.min(indentFromBase, maxIndent)));
+        const maxIndent = Math.max(
+          -indentLeft,
+          indentAreaWidthTwips - indentLeft - indentRight - 720
+        );
+        const rounded = clampRounded(indentFromBase, -indentLeft, maxIndent);
         setDragValue(rounded);
         onFirstLineIndentChange?.(rounded);
       } else if (dragging === 'leftIndent') {
-        const indentFromMargin = positionTwips - leftMarginTwips;
-        const maxIndent = contentTwips - indentRight - 720;
-        const rounded = Math.round(Math.max(0, Math.min(indentFromMargin, maxIndent)));
+        const indentFromMargin = positionTwips - indentAreaLeftTwips;
+        const maxIndent = Math.max(0, indentAreaWidthTwips - indentRight - 720);
+        const rounded = clampRounded(indentFromMargin, 0, maxIndent);
         setDragValue(rounded);
         onIndentLeftChange?.(rounded);
       } else if (dragging === 'rightIndent') {
-        const rightEdge = pageWidthTwips - rightMarginTwips;
+        const rightEdge = indentAreaRightTwips;
         const indentFromRight = rightEdge - positionTwips;
-        const maxIndent = contentTwips - indentLeft - 720;
-        const rounded = Math.round(Math.max(0, Math.min(indentFromRight, maxIndent)));
+        const maxIndent = Math.max(0, indentAreaWidthTwips - indentLeft - 720);
+        const rounded = clampRounded(indentFromRight, 0, maxIndent);
         setDragValue(rounded);
         onIndentRightChange?.(rounded);
       }
@@ -184,7 +238,9 @@ export function HorizontalRuler({
       pageWidthTwips,
       leftMarginTwips,
       rightMarginTwips,
-      contentTwips,
+      indentAreaLeftTwips,
+      indentAreaRightTwips,
+      indentAreaWidthTwips,
       indentLeft,
       indentRight,
       onLeftMarginChange,
@@ -192,6 +248,7 @@ export function HorizontalRuler({
       onFirstLineIndentChange,
       onIndentLeftChange,
       onIndentRightChange,
+      onTableBoundaryChange,
     ]
   );
 
@@ -199,6 +256,7 @@ export function HorizontalRuler({
     setDragging(null);
     setDragValue(null);
     setDragPositionPx(null);
+    activeTableBoundaryRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -276,6 +334,24 @@ export function HorizontalRuler({
 
       {/* === 3 INDENT HANDLES (Google Docs style) === */}
 
+      {/* Table column boundaries — Word-style gray handles shown while inside a table */}
+      {tableBoundaries?.map((boundary, index) => (
+        <TableBoundaryMarker
+          key={`${boundary.tablePmStart}-${boundary.kind}-${boundary.columnIndex}-${index}`}
+          positionPx={twipsToPixels(boundary.positionTwips) * zoom}
+          editable={editable && !!onTableBoundaryChange}
+          isDragging={
+            dragging === 'tableBoundary' &&
+            sameTableBoundary(activeTableBoundaryRef.current, boundary)
+          }
+          isHovered={hoveredTableBoundary === index}
+          onMouseEnter={() => setHoveredTableBoundary(index)}
+          onMouseLeave={() => setHoveredTableBoundary(null)}
+          onMouseDown={(e) => handleTableBoundaryDragStart(e, boundary)}
+          label={t('ruler.tableColumnBoundary')}
+        />
+      ))}
+
       {/* First-line indent — ▼ down triangle at top-left */}
       {showFirstLineIndent && (
         <IndentTriangle
@@ -306,10 +382,10 @@ export function HorizontalRuler({
         />
       )}
 
-      {/* Right indent — ▼ down triangle at top-right */}
+      {/* Right indent — ▲ up triangle at bottom-right */}
       {editable && onIndentRightChange && (
         <IndentTriangle
-          direction="down"
+          direction="up"
           positionPx={rightIndentPosPx}
           editable={editable}
           isDragging={dragging === 'rightIndent'}
@@ -384,8 +460,8 @@ function RulerTick({ tick }: { tick: TickData }): React.ReactElement {
 
 /**
  * Indent triangle handle — Google Docs style.
- * direction="down": ▼ anchored at top (first-line indent, right indent)
- * direction="up":   ▲ anchored at bottom (left indent)
+ * direction="down": ▼ anchored at top (first-line indent)
+ * direction="up":   ▲ anchored at bottom (left/right paragraph indents)
  */
 interface IndentTriangleProps {
   direction: 'up' | 'down';
@@ -461,6 +537,65 @@ function IndentTriangle({
       tabIndex={editable ? 0 : -1}
     >
       <div style={triangleStyle} />
+    </div>
+  );
+}
+
+interface TableBoundaryMarkerProps {
+  positionPx: number;
+  editable: boolean;
+  isDragging: boolean;
+  isHovered: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onMouseDown: (e: React.MouseEvent) => void;
+  label: string;
+}
+
+function TableBoundaryMarker({
+  positionPx,
+  editable,
+  isDragging,
+  isHovered,
+  onMouseEnter,
+  onMouseLeave,
+  onMouseDown,
+  label,
+}: TableBoundaryMarkerProps): React.ReactElement {
+  const bg = isDragging || isHovered ? TABLE_MARKER_ACTIVE : TABLE_MARKER_COLOR;
+
+  return (
+    <div
+      className="docx-ruler-table-boundary"
+      style={{
+        position: 'absolute',
+        left: formatPx(positionPx - 8),
+        top: 1,
+        width: 16,
+        height: RULER_HEIGHT - 3,
+        border: `1px solid ${TABLE_MARKER_BORDER}`,
+        backgroundColor: bg,
+        boxSizing: 'border-box',
+        cursor: editable ? 'col-resize' : 'default',
+        zIndex: isDragging ? 11 : 5,
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onMouseDown={onMouseDown}
+      role="slider"
+      aria-label={label}
+      aria-orientation="horizontal"
+      tabIndex={editable ? 0 : -1}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: 2,
+          bottom: 2,
+          borderLeft: `1px dotted ${TABLE_MARKER_BORDER}`,
+        }}
+      />
     </div>
   );
 }

@@ -81,6 +81,10 @@ export interface SelectionFormatting {
   listState?: ListState;
   /** Line spacing in twips (OOXML value, 240 = single spacing) */
   lineSpacing?: number;
+  /** Paragraph spacing before in twips */
+  spaceBefore?: number;
+  /** Paragraph spacing after in twips */
+  spaceAfter?: number;
   /** Paragraph style ID */
   styleId?: string;
   /** Paragraph left indentation in twips */
@@ -113,6 +117,7 @@ export type FormattingAction =
   | { type: 'highlightColor'; value: string }
   | { type: 'alignment'; value: ParagraphAlignment }
   | { type: 'lineSpacing'; value: number }
+  | { type: 'paragraphSpacing'; side: 'before' | 'after'; value: number }
   | { type: 'applyStyle'; value: string };
 
 /**
@@ -531,6 +536,16 @@ export function Toolbar(explicitProps: ToolbarProps) {
     [disabled, onFormat, onRefocusEditor]
   );
 
+  const handleParagraphSpacingChange = useCallback(
+    (side: 'before' | 'after', twipsValue: number) => {
+      if (!disabled && onFormat) {
+        onFormat({ type: 'paragraphSpacing', side, value: twipsValue });
+        requestAnimationFrame(() => onRefocusEditor?.());
+      }
+    },
+    [disabled, onFormat, onRefocusEditor]
+  );
+
   const handleStyleChange = useCallback(
     (styleId: string) => {
       if (!disabled && onFormat) {
@@ -869,7 +884,10 @@ export function Toolbar(explicitProps: ToolbarProps) {
           {showLineSpacingPicker && (
             <LineSpacingPicker
               value={currentFormatting.lineSpacing}
+              spaceBefore={currentFormatting.spaceBefore}
+              spaceAfter={currentFormatting.spaceAfter}
               onChange={handleLineSpacingChange}
+              onParagraphSpacingChange={handleParagraphSpacingChange}
               disabled={disabled}
             />
           )}

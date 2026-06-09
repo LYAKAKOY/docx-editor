@@ -374,6 +374,56 @@
         >
           {{ sp.labelKey ? t(sp.labelKey) : sp.label }}
         </button>
+        <div class="toolbar-dropdown__group-label">{{ t('lineSpacing.paragraphSpacing') }}</div>
+        <div class="paragraph-spacing-fields" @mousedown.stop @click.stop @keydown.stop>
+          <label class="paragraph-spacing-row">
+            <span>{{ t('lineSpacing.spaceBeforePt') }}</span>
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              inputmode="decimal"
+              :aria-label="t('lineSpacing.spaceBeforePtAria')"
+              :value="paragraphSpacingPoints('before')"
+              @change="commitParagraphSpacingPoints('before', $event)"
+              @keydown.enter.prevent="commitParagraphSpacingPoints('before', $event)"
+              @keydown.esc.prevent="resetParagraphSpacingInput('before', $event)"
+            />
+            <span class="paragraph-spacing-unit">{{ t('lineSpacing.pointsAbbrev') }}</span>
+          </label>
+          <label class="paragraph-spacing-row">
+            <span>{{ t('lineSpacing.spaceAfterPt') }}</span>
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              inputmode="decimal"
+              :aria-label="t('lineSpacing.spaceAfterPtAria')"
+              :value="paragraphSpacingPoints('after')"
+              @change="commitParagraphSpacingPoints('after', $event)"
+              @keydown.enter.prevent="commitParagraphSpacingPoints('after', $event)"
+              @keydown.esc.prevent="resetParagraphSpacingInput('after', $event)"
+            />
+            <span class="paragraph-spacing-unit">{{ t('lineSpacing.pointsAbbrev') }}</span>
+          </label>
+        </div>
+        <button
+          class="toolbar-dropdown__item"
+          @mousedown.prevent="toggleParagraphSpacing('before')"
+        >
+          {{
+            hasParagraphSpacing('before')
+              ? t('lineSpacing.removeSpaceBefore')
+              : t('lineSpacing.addSpaceBefore')
+          }}
+        </button>
+        <button class="toolbar-dropdown__item" @mousedown.prevent="toggleParagraphSpacing('after')">
+          {{
+            hasParagraphSpacing('after')
+              ? t('lineSpacing.removeSpaceAfter')
+              : t('lineSpacing.addSpaceAfter')
+          }}
+        </button>
       </div>
     </div>
 
@@ -499,6 +549,9 @@ const props = defineProps<{
 }>();
 
 const { t } = useTranslation();
+
+const DEFAULT_PARAGRAPH_SPACING_TWIPS = 240;
+const TWIPS_PER_POINT = 20;
 
 const emit = defineEmits<{
   (e: 'find-replace'): void;
@@ -761,6 +814,71 @@ function isCurrentLineSpacing(twips: number): boolean {
   if (!current) return twips === 240; // default is single
   return Math.abs(current - twips) < 10;
 }
+
+function hasParagraphSpacing(side: 'before' | 'after'): boolean {
+  const value =
+    side === 'before'
+      ? ctx.value.paragraphFormatting.spaceBefore
+      : ctx.value.paragraphFormatting.spaceAfter;
+  return (value ?? 0) > 0;
+}
+
+function paragraphSpacingTwips(side: 'before' | 'after'): number {
+  return (
+    (side === 'before'
+      ? ctx.value.paragraphFormatting.spaceBefore
+      : ctx.value.paragraphFormatting.spaceAfter) ?? 0
+  );
+}
+
+function formatParagraphSpacingPoints(twips: number): string {
+  const points = twips / TWIPS_PER_POINT;
+  return Number.isInteger(points) ? String(points) : points.toFixed(2).replace(/\.?0+$/, '');
+}
+
+function paragraphSpacingPoints(side: 'before' | 'after'): string {
+  return formatParagraphSpacingPoints(paragraphSpacingTwips(side));
+}
+
+function parseParagraphSpacingPoints(value: string): number | null {
+  const normalized = value.trim().replace(',', '.');
+  if (!normalized) return 0;
+  const points = Number(normalized);
+  return Number.isFinite(points) && points >= 0 ? points : null;
+}
+
+function paragraphSpacingPointsToTwips(points: number): number {
+  return Math.round(points * TWIPS_PER_POINT);
+}
+
+function getEventInput(event: Event): HTMLInputElement | null {
+  return event.target instanceof HTMLInputElement ? event.target : null;
+}
+
+function resetParagraphSpacingInput(side: 'before' | 'after', event: Event) {
+  const input = getEventInput(event);
+  if (!input) return;
+  input.value = paragraphSpacingPoints(side);
+  input.blur();
+}
+
+function commitParagraphSpacingPoints(side: 'before' | 'after', event: Event) {
+  const input = getEventInput(event);
+  if (!input) return;
+  const points = parseParagraphSpacingPoints(input.value);
+  if (points == null) {
+    input.value = paragraphSpacingPoints(side);
+    return;
+  }
+  const twips = paragraphSpacingPointsToTwips(points);
+  input.value = formatParagraphSpacingPoints(twips);
+  execCommand(side === 'before' ? 'setSpaceBefore' : 'setSpaceAfter', twips);
+}
+
+function toggleParagraphSpacing(side: 'before' | 'after') {
+  const nextValue = hasParagraphSpacing(side) ? 0 : DEFAULT_PARAGRAPH_SPACING_TWIPS;
+  execCommand(side === 'before' ? 'setSpaceBefore' : 'setSpaceAfter', nextValue);
+}
 </script>
 
 <style scoped>
@@ -949,6 +1067,37 @@ function isCurrentLineSpacing(twips: number): boolean {
   color: #9ca3af;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.paragraph-spacing-fields {
+  display: grid;
+  gap: 6px;
+  padding: 4px 12px 8px;
+  color: #475569;
+}
+.paragraph-spacing-row {
+  display: grid;
+  grid-template-columns: minmax(44px, auto) 72px auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.paragraph-spacing-row input {
+  width: 72px;
+  height: 28px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 0 8px;
+  color: #0f172a;
+  font-size: 13px;
+}
+.paragraph-spacing-row input:focus {
+  border-color: #2563eb;
+  outline: 1px solid #2563eb;
+}
+.paragraph-spacing-unit {
+  color: #64748b;
+  font-size: 12px;
 }
 
 /* Style picker */

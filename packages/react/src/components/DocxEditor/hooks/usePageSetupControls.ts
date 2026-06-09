@@ -4,6 +4,8 @@ import {
   setIndentLeft,
   setIndentRight,
   setIndentFirstLine,
+  setListMarkerIndentFromRuler,
+  setListTextIndentFromRuler,
   removeTabStop,
 } from '@eigenpal/docx-editor-core/prosemirror/commands';
 import type { EditorView } from 'prosemirror-view';
@@ -20,11 +22,13 @@ export function usePageSetupControls({
   readOnly,
   handleDocumentChange,
   getActiveEditorView,
+  activeListMarkerPmStart,
 }: {
   document: Document | null;
   readOnly: boolean;
   handleDocumentChange: (doc: Document) => void;
   getActiveEditorView: () => EditorView | null | undefined;
+  activeListMarkerPmStart?: number | null;
 }) {
   const [showPageSetup, setShowPageSetup] = useState(false);
   const handleOpenPageSetup = useCallback(() => setShowPageSetup(true), []);
@@ -93,9 +97,11 @@ export function usePageSetupControls({
     (twips: number) => {
       const view = getActiveEditorView();
       if (!view) return;
+      if (setListTextIndentFromRuler(twips, activeListMarkerPmStart)(view.state, view.dispatch))
+        return;
       setIndentLeft(twips)(view.state, view.dispatch);
     },
-    [getActiveEditorView]
+    [getActiveEditorView, activeListMarkerPmStart]
   );
 
   const handleIndentRightChange = useCallback(
@@ -111,6 +117,8 @@ export function usePageSetupControls({
     (twips: number) => {
       const view = getActiveEditorView();
       if (!view) return;
+      if (setListMarkerIndentFromRuler(twips, activeListMarkerPmStart)(view.state, view.dispatch))
+        return;
       // Negative twips encode a hanging indent.
       if (twips < 0) {
         setIndentFirstLine(-twips, true)(view.state, view.dispatch);
@@ -118,7 +126,7 @@ export function usePageSetupControls({
         setIndentFirstLine(twips, false)(view.state, view.dispatch);
       }
     },
-    [getActiveEditorView]
+    [getActiveEditorView, activeListMarkerPmStart]
   );
 
   const handleTabStopRemove = useCallback(

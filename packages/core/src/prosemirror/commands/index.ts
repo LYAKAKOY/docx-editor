@@ -54,6 +54,11 @@ export {
   setIndentLeft,
   setIndentRight,
   setIndentFirstLine,
+  setListMarkerIndentFromRuler,
+  setListTextIndentFromRuler,
+  getRulerIndentsFromParagraphFormatting,
+  DEFAULT_LIST_HANGING_TWIPS,
+  DEFAULT_LIST_LEFT_INDENT_TWIPS,
   addTabStop,
   removeTabStop,
   toggleBulletList,
@@ -73,7 +78,7 @@ export {
   setRtl,
   setLtr,
 } from './paragraph';
-export type { ResolvedStyleAttrs } from './paragraph';
+export type { ResolvedStyleAttrs, RulerParagraphIndents } from './paragraph';
 
 // Table operations
 export {

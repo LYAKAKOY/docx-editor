@@ -9,7 +9,8 @@
  * overlay sits OUTSIDE the scroll container, so — unlike Vue — it does not add
  * scrollTop/scrollLeft (intentional divergence, #670).
  *
- * `applyCellSelectionHighlight` is re-exported from core (shared with Vue).
+ * `applyCellSelectionHighlight` / `applyListMarkerSelectionHighlight` are
+ * re-exported from core (shared with Vue).
  */
 
 import {
@@ -19,7 +20,10 @@ import {
   type SelectionRect,
 } from '@eigenpal/docx-editor-core/layout-bridge';
 
-export { applyCellSelectionHighlight } from '@eigenpal/docx-editor-core/layout-bridge';
+export {
+  applyCellSelectionHighlight,
+  applyListMarkerSelectionHighlight,
+} from '@eigenpal/docx-editor-core/layout-bridge';
 
 /**
  * Resolve a caret position by measuring the rendered DOM. Delegates the walk

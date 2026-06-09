@@ -14,6 +14,8 @@ import {
   setIndentLeft,
   setIndentRight,
   setIndentFirstLine,
+  setListMarkerIndentFromRuler,
+  setListTextIndentFromRuler,
   removeTabStop,
 } from '@eigenpal/docx-editor-core/prosemirror/commands/paragraph';
 
@@ -22,6 +24,7 @@ export interface UsePageSetupControlsOptions {
   getDocument: () => Document | null;
   readOnly: Ref<boolean>;
   stateTick: Ref<number>;
+  activeListMarkerPmStart?: Ref<number | null>;
   reLayout: () => void;
   emit: (event: string, ...args: unknown[]) => void;
 }
@@ -61,6 +64,13 @@ export function usePageSetupControls(opts: UsePageSetupControlsOptions) {
   function handleIndentLeftChange(twips: number) {
     const view = opts.editorView.value;
     if (!view) return;
+    if (
+      setListTextIndentFromRuler(twips, opts.activeListMarkerPmStart?.value ?? null)(
+        view.state,
+        view.dispatch
+      )
+    )
+      return;
     setIndentLeft(twips)(view.state, view.dispatch);
   }
   function handleIndentRightChange(twips: number) {
@@ -71,6 +81,13 @@ export function usePageSetupControls(opts: UsePageSetupControlsOptions) {
   function handleFirstLineIndentChange(twips: number) {
     const view = opts.editorView.value;
     if (!view) return;
+    if (
+      setListMarkerIndentFromRuler(twips, opts.activeListMarkerPmStart?.value ?? null)(
+        view.state,
+        view.dispatch
+      )
+    )
+      return;
     // Negative twips → hanging indent (matches React's flag-shape API).
     if (twips < 0) {
       setIndentFirstLine(-twips, true)(view.state, view.dispatch);

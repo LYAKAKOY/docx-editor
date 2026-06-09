@@ -28,6 +28,9 @@ export function commitRowResize(view: EditorView, opts: {
     newHeight: number;
 }): void;
 
+// @public (undocumented)
+export function commitTableRulerBoundaryResize(view: EditorView, boundary: TableRulerBoundary, positionTwips: number): void;
+
 // @public
 export const MIN_CELL_WIDTH_TWIPS = 300;
 
@@ -45,6 +48,26 @@ export function readColumnWidths(view: EditorView, pmStart: number, colIndex: nu
 
 // @public
 export function readRowHeight(view: EditorView, pmStart: number, rowIndex: number): number | null;
+
+// @public (undocumented)
+export interface TableRulerBoundary {
+    // (undocumented)
+    columnIndex: number;
+    // (undocumented)
+    kind: 'column' | 'rightEdge';
+    // (undocumented)
+    maxTwips: number;
+    // (undocumented)
+    minTwips: number;
+    // (undocumented)
+    nextTwips?: number;
+    // (undocumented)
+    positionTwips: number;
+    // (undocumented)
+    previousTwips: number;
+    // (undocumented)
+    tablePmStart: number;
+}
 
 // @public
 export const TWIPS_PER_PIXEL = 15;

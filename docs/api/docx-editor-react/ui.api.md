@@ -39,6 +39,8 @@ import { Style } from '@eigenpal/docx-editor-core/types/document';
 import { StyleType } from '@eigenpal/docx-editor-core/types/document';
 import { Table } from '@eigenpal/docx-editor-core/types/document';
 import { TableCell } from '@eigenpal/docx-editor-core/types/document';
+import { TableRulerBoundary } from '@eigenpal/docx-editor-core/prosemirror/tableResize';
+import { TableRulerCellArea } from '@eigenpal/docx-editor-core/layout-bridge';
 import { TabStop } from '@eigenpal/docx-editor-core/types/document';
 import { Theme } from '@eigenpal/docx-editor-core/types/document';
 import { TranslationKey } from '@eigenpal/docx-editor-i18n';
@@ -465,6 +467,8 @@ export interface HorizontalRulerProps {
     // (undocumented)
     hangingIndent?: boolean;
     // (undocumented)
+    indentArea?: TableRulerCellArea | null;
+    // (undocumented)
     indentLeft?: number;
     // (undocumented)
     indentRight?: number;
@@ -479,6 +483,8 @@ export interface HorizontalRulerProps {
     // (undocumented)
     onRightMarginChange?: (marginTwips: number) => void;
     // (undocumented)
+    onTableBoundaryChange?: (boundary: TableRulerBoundary, positionTwips: number) => void;
+    // (undocumented)
     onTabStopRemove?: (positionTwips: number) => void;
     // (undocumented)
     sectionProps?: SectionProperties | null;
@@ -486,6 +492,8 @@ export interface HorizontalRulerProps {
     showFirstLineIndent?: boolean;
     // (undocumented)
     style?: CSSProperties;
+    // (undocumented)
+    tableBoundaries?: TableRulerBoundary[] | null;
     // (undocumented)
     tabStops?: TabStop[] | null;
     // (undocumented)
@@ -636,7 +644,13 @@ export interface LineSpacingPickerProps {
     // (undocumented)
     onChange?: (twipsValue: number) => void;
     // (undocumented)
+    onParagraphSpacingChange?: (side: 'before' | 'after', twipsValue: number) => void;
+    // (undocumented)
     options?: LineSpacingOption[];
+    // (undocumented)
+    spaceAfter?: number;
+    // (undocumented)
+    spaceBefore?: number;
     // (undocumented)
     value?: number;
     // (undocumented)

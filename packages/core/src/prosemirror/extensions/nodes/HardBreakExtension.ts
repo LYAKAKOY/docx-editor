@@ -24,7 +24,12 @@ export const HardBreakExtension = createNodeExtension({
       keyboardShortcuts: {
         'Shift-Enter': (state, dispatch) => {
           if (dispatch) {
-            dispatch(state.tr.replaceSelectionWith(hardBreakType.create()).scrollIntoView());
+            const marks = state.storedMarks ?? state.selection.$from.marks();
+            const tr = state.tr
+              .replaceSelectionWith(hardBreakType.create(null, null, marks), false)
+              .ensureMarks(marks)
+              .scrollIntoView();
+            dispatch(tr);
           }
           return true;
         },

@@ -106,7 +106,16 @@
     "double": "כפול",
     "lineSpacingTitle": "מרחק בין שורות: {label}",
     "paragraphSpacing": "מרחק בין פסקאות",
-    "label": null
+    "spaceBeforePt": null,
+    "spaceBeforePtAria": null,
+    "spaceAfterPt": null,
+    "spaceAfterPtAria": null,
+    "pointsAbbrev": null,
+    "label": null,
+    "addSpaceAfter": null,
+    "addSpaceBefore": null,
+    "removeSpaceAfter": null,
+    "removeSpaceBefore": null
   },
   "styles": {
     "selectAriaLabel": "בחר סגנון פסקה",
@@ -807,7 +816,8 @@
     "leftIndent": "כניסה שמאלית",
     "rightIndent": "כניסה ימנית",
     "topMargin": "שוליים עליונים",
-    "bottomMargin": "שוליים תחתונים"
+    "bottomMargin": "שוליים תחתונים",
+    "tableColumnBoundary": null
   },
   "print": {
     "label": "הדפסה",

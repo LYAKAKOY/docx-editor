@@ -25,7 +25,7 @@ const BODY_SCOPE = '.layout-page-content';
 export function findBodyPmSpans(container: ParentNode): HTMLElement[] {
   return Array.from(
     container.querySelectorAll<HTMLElement>(`${BODY_SCOPE} span[data-pm-start][data-pm-end]`)
-  );
+  ).filter((el) => !el.classList.contains('layout-list-marker'));
 }
 
 /**
